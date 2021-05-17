@@ -1,0 +1,86 @@
+name: $(Build.DefinitionName) $(date:yyyyMMdd)$(rev:.r)
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build
+    pool:
+      vmImage: windows-latest
+
+    variables:
+      BuildPlatform: 'Any CPU'
+      BuildConfiguration: 'Release'
+
+    steps:
+    - task: MSBuild@1
+      displayName: 'Build solution'
+      inputs:
+        solution: '**\DataGridExtensions.sln'
+        platform: '$(BuildPlatform)'
+        configuration: '$(BuildConfiguration)'
+        msbuildArguments: '-restore'
+        clean: true
+
+    - task: CopyFiles@2
+      displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
+      inputs:
+        SourceFolder: 'src\DataGridExtensions\bin\$(BuildConfiguration)'
+        Contents: '*.nupkg'
+        TargetFolder: '$(build.artifactstagingdirectory)'
+        CleanTargetFolder: true
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact: BuildPackages'
+      inputs:
+        PathtoPublish: '$(build.artifactstagingdirectory)'
+        ArtifactName: BuildPackages
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact: signing scripts'
+      inputs:
+        PathtoPublish: 'signing'
+        ArtifactName: signing
+
+- stage: CodeSign
+  condition: and(succeeded('Build'), ne(variables['build.reason'], 'PullRequest'))
+  jobs:
+  - deployment: CodeSign
+    displayName: Code Signing
+    pool:
+      vmImage: windows-latest
+    environment: Code Signing
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: CmdLine@2
+            displayName: "AntiMalware Scan"
+            inputs:
+              script: |
+                Dir "$(Pipeline.Workspace)\BuildPackages"
+                "%ProgramFiles%\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File "$(Pipeline.Workspace)\BuildPackages"
+              failOnStderr: true
+
+          - task: DotNetCoreCLI@2
+            inputs:
+              command: custom
+              custom: tool
+              arguments: install --tool-path . SignClient
+            displayName: Install SignTool tool
+
+          - pwsh: |
+              .\SignClient "Sign" `
+              --baseDirectory "$(Pipeline.Workspace)\BuildPackages" `
+              --input "**/*.*" `
+              --config "$(Pipeline.Workspace)\signing\SignClient.json" `
+              --filelist "$(Pipeline.Workspace)\signing\filelist.txt" `
+              --user "$(SignClientUser)" `
+              --secret "$(SignClientSecret)" `
+              --name "DataGrid Extensions" `
+              --description "DataGrid Extensions" `
+              --descriptionUrl "https://github.com/dotnet/DataGridExtensions"
+            displayName: Sign packages
+
+          - publish: $(Pipeline.Workspace)\BuildPackages
+            displayName: Publish Signed Packages
+            artifact: SignedPackages

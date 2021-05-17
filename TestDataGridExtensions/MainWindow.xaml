@@ -1,0 +1,81 @@
+﻿<Window x:Class="TestDataGridExtensions.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TestDataGridExtensions"
+        xmlns:dgx="urn:tom-englert.de/DataGridExtensions"
+        xmlns:Wpf="clr-namespace:TestDataGridExtensions.Wpf"
+        xmlns:controls="clr-namespace:TestDataGridExtensions.Controls"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Window.Resources>
+        <ControlTemplate x:Key="FilterOperatorControl">
+            <controls:FilterOperatorControl Filter="{Binding Path=Filter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}"/>
+        </ControlTemplate>
+
+        <ControlTemplate x:Key="FilterStringControl">
+            <controls:FilterStringControl  
+                    Filter="{Binding Path=Filter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}"
+                    Values="{Binding Path=Values, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}"
+                    SourceValues="{Binding Path=SourceValues, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}"
+                    SelectableValues="{Binding Path=SelectableValues, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}"/>
+        </ControlTemplate>
+    </Window.Resources>
+    <Grid>
+        <!--dgx:DataGridFilter.GlobalFilter="{Binding GlobalFilter}"-->
+        <DataGrid x:Name="dataGrid" AutoGenerateColumns="False" Margin="5" 
+                  ItemsSource="{Binding CarsCollectionView, NotifyOnTargetUpdated=true}" 
+                  SelectedItem="{Binding CarSelected}"
+                  dgx:DataGridFilter.IsAutoFilterEnabled="True">
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="GroupItem">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type GroupItem}">
+                                        <Expander IsExpanded="True" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" d:DataContext="{d:DesignInstance GroupItem}" BorderThickness="1,1,1,5">
+                                            <i:Interaction.Behaviors>
+                                                <Wpf:PersistGroupExpandedStateBehavior GroupName="{Binding Name}" />
+                                            </i:Interaction.Behaviors>
+                                            <Expander.Header>
+                                                <DockPanel>
+                                                    <TextBlock Text="{Binding Path=Name}" FontWeight="Bold" Margin="4" />
+                                                </DockPanel>
+                                            </Expander.Header>
+                                            <Expander.Content>
+                                                <ItemsPresenter />
+                                            </Expander.Content>
+                                        </Expander>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Name"
+                                        dgx:DataGridFilterColumn.Template="{StaticResource FilterStringControl}"
+                                        SortMemberPath="Name">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name, Mode=OneWay}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Length"
+                                        dgx:DataGridFilterColumn.Template="{StaticResource FilterOperatorControl}"
+                                        SortMemberPath="Length">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Length, Mode=OneWay}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Window>

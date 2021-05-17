@@ -1,0 +1,168 @@
+﻿<Control x:Name="Control" x:Class="TestDataGridExtensions.Controls.FilterStringControl"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:dgx="clr-namespace:DataGridExtensions;assembly=DataGridExtensions"
+         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+         xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+         xmlns:toms="urn:TomsToolbox">
+    <Control.Template>
+        <ControlTemplate>
+            <Grid>
+                <ToggleButton x:Name="button" IsChecked="{Binding Path=IsPopupVisible, ElementName=Control, Mode=TwoWay}">
+                    <ToggleButton.Style>
+                        <Style TargetType="Control">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=Filter, ElementName=Control}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Hidden" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=DataGridColumnHeader}}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+                    <!-- Reuse the standard icon, but change color to green -->
+                    <Control Style="{DynamicResource {x:Static dgx:DataGridFilter.IconStyleKey}}" Width="12.5" Height="12.5">
+                        <Control.Template>
+                            <ControlTemplate>
+                                <Path Data="M 0 0 L 10 0 L 6.5 4 L 5.5 10 L 4.5 10 L 3.5 4 Z" Fill="{TemplateBinding Foreground}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </ControlTemplate>
+                        </Control.Template>
+                    </Control>
+                </ToggleButton>
+                <Popup x:Name="popup" IsOpen="{Binding Path=IsPopupVisible, ElementName=Control, Mode=TwoWay}"
+                       AllowsTransparency="True"
+                       DataContext="{Binding ElementName=Control}" StaysOpen="False">
+                    <FrameworkElement.Resources>
+                        <CollectionViewSource x:Key="SortedValuesSource" Source="{Binding SourceValues}">
+                            <CollectionViewSource.SortDescriptions>
+                                <componentModel:SortDescription />
+                            </CollectionViewSource.SortDescriptions>
+                        </CollectionViewSource>
+                    </FrameworkElement.Resources>
+
+                    <Border Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderThickness="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}">
+                        <DockPanel>
+                            <CheckBox x:Name="SelectAll" DockPanel.Dock="Top" IsThreeState="True" Content="{Binding SelectAllContent}" Margin="4,3" />
+                            <Border DockPanel.Dock="Top" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+                            <ListBox x:Name="listBox" ItemsSource="{Binding Source={StaticResource SortedValuesSource}}"
+                                     SelectionMode="Extended" BorderThickness="0" Margin="1" Background="Transparent" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <DockPanel>
+                                                        <CheckBox DockPanel.Dock="Left" Margin="3,2" IsChecked="{Binding IsSelected, RelativeSource={RelativeSource FindAncestor, AncestorType=ListBoxItem}}"/>
+                                                        <ContentPresenter VerticalAlignment="Center" />
+                                                    </DockPanel>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock x:Name="Text" Margin="3,2" Text="{Binding}" VerticalAlignment="Center" />
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding}" Value="">
+                                                <Setter TargetName="Text" Property="Text" Value="(Empty)" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                                <i:Interaction.Behaviors>
+                                    <toms:ListBoxSelectAllBehavior AreAllFilesSelected="{Binding IsChecked, ElementName=SelectAll}" />
+                                </i:Interaction.Behaviors>
+                            </ListBox>
+
+                            <ListBox x:Name="listBox1" ItemsSource="{Binding Values}"
+                                     SelectionMode="Extended" BorderThickness="0" Margin="1" Background="Transparent" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <DockPanel>
+                                                        <CheckBox DockPanel.Dock="Left" Margin="3,2" IsChecked="{Binding IsSelected, RelativeSource={RelativeSource FindAncestor, AncestorType=ListBoxItem}}"/>
+                                                        <ContentPresenter VerticalAlignment="Center" />
+                                                    </DockPanel>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock x:Name="Text" Margin="3,2" Text="{Binding}" VerticalAlignment="Center" />
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding}" Value="">
+                                                <Setter TargetName="Text" Property="Text" Value="(Empty)" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <ListBox x:Name="listBox2" ItemsSource="{Binding SourceValues}"
+                                     SelectionMode="Extended" BorderThickness="0" Margin="1" Background="Transparent" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <DockPanel>
+                                                        <CheckBox DockPanel.Dock="Left" Margin="3,2" IsChecked="{Binding IsSelected, RelativeSource={RelativeSource FindAncestor, AncestorType=ListBoxItem}}"/>
+                                                        <ContentPresenter VerticalAlignment="Center" />
+                                                    </DockPanel>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock x:Name="Text" Margin="3,2" Text="{Binding}" VerticalAlignment="Center" />
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding}" Value="">
+                                                <Setter TargetName="Text" Property="Text" Value="(Empty)" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <ListBox x:Name="listBox3" ItemsSource="{Binding SelectableValues}"
+                                     SelectionMode="Extended" BorderThickness="0" Margin="1" Background="Transparent" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <DockPanel>
+                                                        <CheckBox DockPanel.Dock="Left" Margin="3,2" IsChecked="{Binding IsSelected, RelativeSource={RelativeSource FindAncestor, AncestorType=ListBoxItem}}"/>
+                                                        <ContentPresenter VerticalAlignment="Center" />
+                                                    </DockPanel>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock x:Name="Text" Margin="3,2" Text="{Binding}" VerticalAlignment="Center" />
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding}" Value="">
+                                                <Setter TargetName="Text" Property="Text" Value="(Empty)" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DockPanel>
+                    </Border>
+                </Popup>
+            </Grid>
+        </ControlTemplate>
+    </Control.Template>
+</Control>
